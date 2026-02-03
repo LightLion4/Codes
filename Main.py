@@ -81,18 +81,8 @@ class SysModel(nn.Module):
     def forward(self, bVec, fwd_noise, fb_noise, isTraining, eachbatch):
         bVec_add0 = torch.cat([bVec, torch.zeros(self.args.batchSize, 1, 1).to(self.args.device)], dim=1)
         combined_noise = fwd_noise + fb_noise
-
-        # ==================== 修改开始 ====================
-        # 生成伯努利分布掩码，概率 p=0.5
-        # 1 表示成功接收反馈，0 表示反馈丢失
-        # torch.full_like 创建一个与 noise 形状相同的全 0.5 张量
-        # torch.bernoulli 根据该概率生成 0 或 1
         feedback_mask = torch.bernoulli(torch.full_like(combined_noise, 0.5))
-
-        # 将掩码应用到 combined_noise
-        # 如果 mask 是 0，combined_noise 变为 0，意味着发送方没有获取到这次的反馈信息
         combined_noise = combined_noise * feedback_mask
-        # ==================== 修改结束 ====================
 
         for idx in range(self.args.K + 1):
             forward_noise_input = torch.cat([combined_noise[:, :idx, 1:],
